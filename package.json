@@ -1,0 +1,23 @@
+{
+  "name": "datadata",
+  "version": "0.1.0",
+  "description": "Data loading and processing",
+  "main": "src/index",
+  "scripts": {
+    "test": "mocha",
+    "doc": "jsdoc src/index.js -d doc",
+    "browserify": "browserify src/index.js -o datadata.js"
+  },
+  "keywords": [
+    "data",
+    "promise",
+    "utilities"
+  ],
+  "author": "Florian Ledermann <florian.ledermann@tuwien.ac.at>",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "browserify": "^10.2.4",
+    "jsdoc": "^3.3.2",
+    "mocha": "^2.2.5"
+  }
+}
