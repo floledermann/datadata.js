@@ -359,6 +359,54 @@ dd.emit = {
     }
 };
 
+dd.map.geo = {
+    point: function(latProp, lonProp, keyProp) {
+        var id = 0;
+        return function(d, emit) {
+            var key = keyProp ? d[keyProp] : id++;
+            emit(key, dd.geo.Point(d[lonProp], d[latProp], d));
+        }
+    }
+};
+
+dd.emit.geo = {
+    segments: function() {
+        return function(key, data, emit) {
+            var prev = null, cur = null;
+            for (var i=0; i<data.length; i++) {
+                cur = data[i];
+                if (prev) {
+                    emit(key + '-' + i, dd.geo.LineString([[prev.lon,prev.lat],[cur.lon,cur.lat]], prev));
+                }
+                prev = cur;
+            }
+        }
+    }
+};
+
+// constructors for GeoJSON objects
+dd.geo = {
+    Point: function(lon, lat, properties) {
+        return {
+            type: 'Feature',
+            geometry: {
+                type: 'Point',
+                coordinates: [lon, lat]
+            },
+            properties: properties
+        };
+    },
+    LineString: function(coordinates, properties) {
+        return {
+            type: 'Feature',
+            geometry: {
+                type: 'LineString',
+                coordinates: coordinates
+            },
+            properties: properties
+        };
+    }
+};
 
 function wildcards(spec) {
     spec = dd.toArray(spec);
