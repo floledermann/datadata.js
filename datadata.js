@@ -103,43 +103,6 @@ var dd = function(spec, map, reduce) {
     }
 }
 
-// type checking
-/**
-Return true if parameter is a string.
-@param {any} val - The value to check.
-*/
-dd.isString = function (val) {
-  return Object.prototype.toString.call(val) == '[object String]';
-}
-/**
-Return true if parameter is a function.
-@param {any} val - The value to check.
-*/
-dd.isFunction = function(obj) {
-    return (typeof obj === 'function');
-}
-/**
-Return true if parameter is an Array.
-@param {any} val - The value to check.
-*/
-dd.isArray = function(obj) {
-    return (obj instanceof Array);
-}
-/**
-Return true if parameter is an Object, but not an Array, String or anything created with a custom constructor.
-@param {any} val - The value to check.
-*/
-dd.isDictionary = function(obj) {
-    return (obj && obj.constructor && obj.constructor === Object);
-}
-/**
-Return true if parameter is undefined.
-@param {any} val - The value to check.
-*/
-dd.isUndefined = function(obj) {
-    return (typeof obj == 'undefined');
-}
-
 // simple load function, returns a promise for data without map/reduce-ing
 // mostly present for legacy reasons
 dd.load = function(spec, key) {
@@ -186,6 +149,56 @@ dd.load = function(spec, key) {
         }
     }
 }
+
+
+// Type checking
+/**
+Return true if argument is a string.
+@param {any} val - The value to check.
+*/
+dd.isString = function (val) {
+  return Object.prototype.toString.call(val) == '[object String]';
+}
+/**
+Return true if argument is a function.
+@param {any} val - The value to check.
+*/
+dd.isFunction = function(obj) {
+    return (typeof obj === 'function');
+}
+/**
+Return true if argument is an Array.
+@param {any} val - The value to check.
+*/
+dd.isArray = function(obj) {
+    return (obj instanceof Array);
+}
+/**
+Return true if argument is an Object, but not an Array, String or anything created with a custom constructor.
+@param {any} val - The value to check.
+*/
+dd.isDictionary = function(obj) {
+    return (obj && obj.constructor && obj.constructor === Object);
+}
+/**
+Return true if argument is undefined.
+@param {any} val - The value to check.
+*/
+dd.isUndefined = function(obj) {
+    return (typeof obj == 'undefined');
+}
+
+// Type conversion / utilities
+/**
+If the argument is already an Array, return a copy of the Array.
+Else, return a single-element Array containing the argument.
+*/
+dd.toArray = function(val) {
+    if (!val) return [];
+    // return a copy if aready array, else single-element array
+    return dd.isArray(val) ? val.slice() : [val];
+}
+
 
 /**
 Return an {@link module:datadata.OrderedHash|OrderedHash} object.
@@ -245,11 +258,6 @@ dd.OrderedHash = function() {
         },
         unsorted_dict: function() {
             return vals;
-        },
-        geometries: function(){
-            return Object.keys(vals).map(function (k) {
-                return vals[k];
-            });
         }
     };
 };
@@ -352,14 +360,57 @@ dd.emit = {
     }
 };
 
-function arrayify(el) {
-    if (!el) return [];
-    // return a copy if aready array, else singel-element array
-    return (el.slice() && el.push && typeof el.push == 'function') ? el.slice() : [el];
-}
+dd.map.geo = {
+    point: function(latProp, lonProp, keyProp) {
+        var id = 0;
+        return function(d, emit) {
+            var key = keyProp ? d[keyProp] : id++;
+            emit(key, dd.geo.Point(d[lonProp], d[latProp], d));
+        }
+    }
+};
+
+dd.emit.geo = {
+    segments: function() {
+        return function(key, data, emit) {
+            var prev = null, cur = null;
+            for (var i=0; i<data.length; i++) {
+                cur = data[i];
+                if (prev) {
+                    emit(key + '-' + i, dd.geo.LineString([[prev.lon,prev.lat],[cur.lon,cur.lat]], prev));
+                }
+                prev = cur;
+            }
+        }
+    }
+};
+
+// constructors for GeoJSON objects
+dd.geo = {
+    Point: function(lon, lat, properties) {
+        return {
+            type: 'Feature',
+            geometry: {
+                type: 'Point',
+                coordinates: [lon, lat]
+            },
+            properties: properties
+        };
+    },
+    LineString: function(coordinates, properties) {
+        return {
+            type: 'Feature',
+            geometry: {
+                type: 'LineString',
+                coordinates: coordinates
+            },
+            properties: properties
+        };
+    }
+};
 
 function wildcards(spec) {
-    spec = arrayify(spec);
+    spec = dd.toArray(spec);
     for (var i=0; i<spec.length; i++) {
         if (!(spec[i] instanceof RegExp)) {
             spec[i] = new RegExp('^' + spec[i].replace('*','.*').replace('?','.'));
