@@ -172,7 +172,7 @@ var dd = function(spec, map, reduce, options) {
 dd.registerFileHandler = registerFileHandler;
 
 // simple load function, returns a promise for data without map/reduce-ing
-// mostly present for legacy reasons
+// DO NOT USE - present only for legacy reasons
 dd.load = function(spec, key) {
     if (spec.then && typeof spec.then === 'function') {
         // already a thenable / promise
