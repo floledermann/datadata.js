@@ -16,6 +16,116 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 'use strict';
 
+// test whether in a browser environment
+// http://stackoverflow.com/a/11918368/171579
+if (typeof module !== 'undefined' && this.module !== module) {
+    // node
+    var d3dsv = require('d3-dsv');
+    var fs = require('fs');
+    
+    var fileparser = function(func) {
+        return function(path, row, callback) {
+            if (dd.isUndefined(callback)) {
+                callback = row;
+                row = null;
+            }
+            fs.readFile(path, 'utf8', function(error, data) {
+                if (error) return callback(error);
+                data = func(data, row);
+                callback(null,data);
+            });
+        }
+    };
+    
+    var d3 = {
+        csv: fileparser(d3dsv.csv.parse),
+        tsv: fileparser(d3dsv.tsv.parse),
+        json: fileparser(JSON.parse)
+    }
+}
+else {
+    // browser
+    // we expect global d3 to be available
+}
+
+function rowFileHandler(loader) {
+    // TODO: file handler API should not need to be passed map, reduce functions but be wrapped externally
+    return function(path, map, reduce) {
+        return new Promise(function(resolve, reject) {
+            loader(path, function(row) {
+                var keys = Object.keys(row);
+                for (var i=0; i<keys.length; i++) {
+                    var key = keys[i];
+                    if (!isNaN(+row[key])) { // in JavaScript, NaN !== NaN !!!
+                        // convert to number if number
+                        row[key] = +row[key];
+                    }
+                }
+                return row;
+            },
+            function(error, data) {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve(dd.mapreduce(data, map, reduce));                    
+            });
+        }); 
+    }
+}
+
+function jsonFileHandler(path, map, reduce) {
+    return new Promise(function(resolve, reject) {
+        d3.json(path, function(error, data) {
+            if (error) {
+                reject(error);
+                return;
+            }
+                                
+            if (dd.isArray(data)) {
+                resolve(dd.mapreduce(data, map, reduce));
+            }
+            else {
+                // object - treat entries as keys by default
+                var keys = Object.keys(data);
+                var map_func;
+                if (!map) {
+                    // use keys as data to emit key/data pairs in map step!
+                    map_func = dd.map.dict(data);
+                }
+                else {
+                    map_func = function(k, emit) {
+                        // put original key into object
+                        var v = data[k];
+                        v.__key__ = k;
+                        // call user-provided map funtion with object
+                        map(v, emit);
+                    }
+                }
+                resolve(dd.mapreduce(keys, map_func, reduce));
+            }                    
+        });
+    });
+}
+
+var fileHandlers = {
+    'csv':  rowFileHandler(d3.csv),
+    'tsv':  rowFileHandler(d3.tsv),
+    'json': jsonFileHandler
+}
+
+var getFileHandler = function(pathOrExt) {
+    // guess type
+    var ext = pathOrExt.split('.').pop().toLowerCase();
+    return fileHandlers[ext] || null;
+}
+
+var registerFileHandler = function(ext, handler) {
+    fileHandlers[ext] = handler;
+}
+
+// TODO: register .topojson, .geojson in mapmap.js
+
 /**
 Datadata - a module for loading and processing data.
 You can call the module as a function to create a promise for data from a URL, Function or Array. 
@@ -25,82 +135,39 @@ Returns a promise for data for everything.
 @param {(string)} [reduce=datadata.emit.last] - The reduce function for map/reduce.
 @exports module:datadata
 */
-var dd = function(spec, map, reduce) {
+var dd = function(spec, map, reduce, options) {
+
+    // options
+    // type: override file extension, e.g. for API urls (e.g. 'csv')
+    options = options || {};
+
+    if (spec == null) throw new Error("datadata.js: No data specification.");
+    
     if (map && !dd.isFunction(map)) {
         // map is string -> map to attribute value
         map = dd.map.key(map);
     }
+    
     if (dd.isString(spec)) {
-        // consider spec to be a URL to load
-        // guess type
-        var ext = spec.split('.').pop();
-        if (ext == 'json' || ext == 'topojson' || ext == 'geojson') {
-            return new Promise(function(resolve, reject) {
-                d3.json(spec, function(error, data) {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-                                        
-                    if (data.slice && typeof data.slice == 'function') {
-                        // array
-                        resolve(dd.mapreduce(data, map, reduce));
-                    }
-                    else {
-                        // object - treat entries as keys by default
-                        var keys = Object.keys(data);
-                        var map_func;
-                        if (!map) {
-                            // use keys as data to emit key/data pairs in map step!
-                            map_func = dd.map.dict(data);
-                        }
-                        else {
-                            map_func = function(k, emit) {
-                                // put original key into object
-                                var obj = data[k];
-                                obj.__key__ = k;
-                                // call user-provided map funtion with object
-                                map(obj, emit);
-                            }
-                        }
-                        resolve(dd.mapreduce(keys, map_func, reduce));
-                    }                    
-                });
-            });
+        // consider spec to be a URL/file to load
+        var handler = getFileHandler(options.type || spec);
+        if (handler) {
+            return handler(spec, map, reduce);
         }
         else {
-            return new Promise(function(resolve, reject) {
-                d3.csv(spec, function(row) {
-                    var keys = Object.keys(row);
-                    for (var i=0; i<keys.length; i++) {
-                        var key = keys[i];
-                        if (!isNaN(+row[key])) { // in JavaScript, NaN !== NaN !!!
-                            // convert to number if number
-                            row[key] = +row[key];
-                        }
-                    }
-                    return row;
-                },
-                function(error, data) {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-                    resolve(dd.mapreduce(data, map, reduce));                    
-                });
-            });
+            throw new Error("datadata.js: Unknown file type for: " + spec);
         }
     }
-    else if (dd.isFunction(spec)) {
-        // synthesize data from function?
-        console.warn("Not implemented: datadata from function!");
-    }
-    else {
+    if (dd.isArray(spec)) {
         return new Promise(function(resolve, reject) {
             resolve(dd.mapreduce(spec, map, reduce));
         });
     }
+    throw new Error("datadata.js: Unknown data specification.");
 }
+
+// expose registration method
+dd.registerFileHandler = registerFileHandler;
 
 // simple load function, returns a promise for data without map/reduce-ing
 // mostly present for legacy reasons

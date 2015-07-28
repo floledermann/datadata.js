@@ -13,7 +13,7 @@
     "test": "mocha",
     "build": "npm run browserify",
     "doc": "jsdoc src/index.js -d doc",
-    "browserify": "browserify src/index.js -o datadata.js",
+    "browserify": "browserify src/index.js -i d3-dsv -o datadata.js",
     "preversion": "npm test",
     "version": "npm run build"
   },
@@ -25,6 +25,10 @@
   "devDependencies": {
     "browserify": "^10.2.4",
     "jsdoc": "^3.3.2",
-    "mocha": "^2.2.5"
+    "mocha": "^2.2.5",
+    "mockery": "^1.4.0"
+  },
+  "dependencies": {
+    "d3-dsv": "^0.1.5"
   }
 }
