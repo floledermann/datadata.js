@@ -15,7 +15,7 @@
     "doc": "jsdoc src/index.js -d doc",
     "browserify": "browserify src/index.js -i d3-dsv -o datadata.js",
     "preversion": "npm test",
-    "version": "npm run build"
+    "version": "npm run build && git add datadata.js"
   },
   "keywords": [
     "data",
