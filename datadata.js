@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 'use strict';
 
 // test whether in a browser environment
-// http://stackoverflow.com/a/11918368/171579
-if (typeof module !== 'undefined' && this.module !== module) {
+http://stackoverflow.com/a/4224668/171579
+if (typeof window === 'undefined') {
     // node
     var d3dsv = require('d3-dsv');
     var fs = require('fs');
@@ -45,11 +45,13 @@ if (typeof module !== 'undefined' && this.module !== module) {
         tsv: fileparser(d3dsv.tsv.parse),
         json: fileparser(JSON.parse)
     }
-}
-else {
+
+} else {
     // browser
     // we expect global d3 to be available
+    var d3 = window.d3;
 }
+
 
 function rowFileHandler(loader) {
     // TODO: file handler API should not need to be passed map, reduce functions but be wrapped externally
