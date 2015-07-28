@@ -198,6 +198,24 @@ dd.toArray = function(val) {
     return dd.isArray(val) ? val.slice() : [val];
 }
 
+/**
+Shallow object extension, mainly for options.
+*/
+dd.extend = function() {
+    var obj = {};
+
+    for (var i = 0; i < arguments.length; i++) {
+        var src = arguments[i];
+        
+        for (var key in src) {
+            if (src.hasOwnProperty(key)) {
+                obj[key] = src[key];
+            }
+        }
+    }
+
+    return obj;
+}
 
 /**
 Return an {@link module:datadata.OrderedHash|OrderedHash} object.
