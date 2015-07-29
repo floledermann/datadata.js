@@ -268,9 +268,9 @@ dd.toArray = function(val) {
 }
 
 /**
-Shallow object extension, mainly for options.
+Shallow object merging, mainly for options. Returns a new object.
 */
-dd.extend = function() {
+dd.merge = function() {
     var obj = {};
 
     for (var i = 0; i < arguments.length; i++) {
