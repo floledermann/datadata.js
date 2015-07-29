@@ -1,6 +1,6 @@
 {
   "name": "datadata",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "author": "Florian Ledermann <florian.ledermann@tuwien.ac.at>",
   "license": "AGPL-3.0",
   "description": "Data loading and processing library",
