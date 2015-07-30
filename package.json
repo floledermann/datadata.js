@@ -22,13 +22,13 @@
     "promise",
     "utilities"
   ],
+  "dependencies": {
+    "d3-dsv": "^0.1.5"
+  },
   "devDependencies": {
     "browserify": "^10.2.4",
     "jsdoc": "^3.3.2",
     "mocha": "^2.2.5",
     "mockery": "^1.4.0"
-  },
-  "dependencies": {
-    "d3-dsv": "^0.1.5"
   }
 }
