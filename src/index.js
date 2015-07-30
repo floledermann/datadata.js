@@ -17,7 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 'use strict';
 
 // test whether in a browser environment
-http://stackoverflow.com/a/4224668/171579
 if (typeof window === 'undefined') {
     // node
     var d3dsv = require('d3-dsv');
