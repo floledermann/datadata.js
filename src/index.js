@@ -51,26 +51,33 @@ if (typeof window === 'undefined') {
 
 function rowFileHandler(loader) {
     // TODO: file handler API should not need to be passed map, reduce functions but be wrapped externally
-    return function(path, map, reduce) {
-        return new Promise(function(resolve, reject) {
-            loader(path, function(row) {
-                var keys = Object.keys(row);
+    return function(path, map, reduce, options) {
+    
+        options = dd.merge({
+            // default accessor function tries to convert number-like strings to numbers
+            accessor: function(d) {
+                var keys = Object.keys(d);
                 for (var i=0; i<keys.length; i++) {
                     var key = keys[i];
-                    if (!isNaN(+row[key])) { // in JavaScript, NaN !== NaN !!!
-                        // convert to number if number
-                        row[key] = +row[key];
+                    // convert to number if it looks like a number
+                    if (!isNaN(+d[key])) {
+                        d[key] = +d[key];
                     }
                 }
-                return row;
-            },
-            function(error, data) {
-                if (error) {
-                    reject(error);
-                    return;
+                return d;
+            }
+        }, options);
+        
+        return new Promise(function(resolve, reject) {
+            loader(path, options.accessor,
+                function(error, data) {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve(dd.mapreduce(data, map, reduce));                    
                 }
-                resolve(dd.mapreduce(data, map, reduce));                    
-            });
+            );
         }); 
     };
 }
@@ -153,7 +160,7 @@ var dd = function(spec, map, reduce, options) {
         // consider spec to be a URL/file to load
         var handler = getFileHandler(options.type || spec);
         if (handler) {
-            return handler(spec, map, reduce);
+            return handler(spec, map, reduce, options);
         }
         else {
             throw new Error("datadata.js: Unknown file type for: " + spec);

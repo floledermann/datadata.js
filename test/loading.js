@@ -62,5 +62,39 @@ describe("Loading", function() {
             }, done)
             .catch(done);
         });
+        it("should convert strings to numbers with default accessor", function(done) {
+            dd('data.csv','first').then(function dataLoaded(data){
+                assert.strictEqual(data.at(0).first, 1);
+                assert.notStrictEqual(data.at(0).first, '1');
+                done();
+            }, done)
+            .catch(done);
+        });
+        it("should not convert strings to numbers with custom accessor", function(done) {
+            dd('data.csv','first',null,{accessor:null}).then(function dataLoaded(data){
+                assert.strictEqual(data.at(0).first, '1');
+                assert.notStrictEqual(data.at(0).first, 1);
+                done();
+            }, done)
+            .catch(done);
+        });
+        it("should correctly apply accessor", function(done) {
+            dd('data.csv','one',null,{
+                accessor:function(d) {
+                    return {
+                        one: +d.first,
+                        two: d.second,
+                        three: d.third
+                    }
+                }
+            }).then(function dataLoaded(data){
+                assert.strictEqual(data.at(0).one, 1);
+                assert.strictEqual(data.at(0).two, '1');
+                assert.strictEqual(data.at(0).three, '1');
+                assert.strictEqual(data.at(0).first, undefined);
+                done();
+            }, done)
+            .catch(done);
+        });
     });
 });
