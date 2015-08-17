@@ -7,6 +7,7 @@ mockery.registerMock('fs', {
         switch (path) {
             case 'data.csv': callback(null, 'first,second,third\n1,1,1\n2,2,2'); break;
             case 'data.tsv': callback(null, 'first\tsecond\tthird\n1\t1\t1\n2\t2\t2'); break;
+            case 'data.xsv': callback(null, 'first;second;third\n1;1;1\n2;2;2'); break;
             default:
                 callback(new Error('File not found: ' + path));
         }
@@ -92,6 +93,32 @@ describe("Loading", function() {
                 assert.strictEqual(data.at(0).two, '1');
                 assert.strictEqual(data.at(0).three, '1');
                 assert.strictEqual(data.at(0).first, undefined);
+                done();
+            }, done)
+            .catch(done);
+        });
+        it("should use custom file handler", function(done) {
+            var d3dsv = require('d3-dsv');
+            mockery.enable();
+            var fs = require('fs');
+            mockery.disable();
+            var fileparser = function(func) {
+                return function(path, row, callback) {
+                    if (dd.isUndefined(callback)) {
+                        callback = row;
+                        row = null;
+                    }
+                    fs.readFile(path, 'utf8', function(error, data) {
+                        if (error) return callback(error);
+                        data = func(data, row);
+                        callback(null,data);
+                    });
+                };
+            };
+            dd('data.xsv','first',null,{
+                fileHandler: dd.rowFileHandler(fileparser(d3dsv.dsv(';').parse))
+            }).then(function dataLoaded(data){
+                assert.strictEqual(data.at(0).first, 1);
                 done();
             }, done)
             .catch(done);
