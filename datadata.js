@@ -527,6 +527,7 @@ dd.mapreduce = function (data, map, reduce) {
     reduce = reduce || dd.emit.last(); // default
     
 	var mapEmit = function(key, value) {
+        if (key == null) return; // do not emit if key is null or undefined
 		if(!mapResult[key]) {
 			mapResult[key] = [];
 		}
