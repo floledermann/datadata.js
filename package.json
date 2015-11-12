@@ -27,7 +27,7 @@
     "utilities"
   ],
   "dependencies": {
-    "d3-dsv": "^0.1.5"
+    "d3-dsv": "0.1.5"
   },
   "devDependencies": {
     "browserify": "^10.2.4",
