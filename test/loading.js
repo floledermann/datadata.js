@@ -5,9 +5,9 @@ var mockery = require('mockery');
 mockery.registerMock('fs', {
     readFile: function(path, encoding, callback) {
         switch (path) {
-            case 'data.csv': callback(null, 'first,second,third\n1,1,1\n2,2,2'); break;
-            case 'data.tsv': callback(null, 'first\tsecond\tthird\n1\t1\t1\n2\t2\t2'); break;
-            case 'data.xsv': callback(null, 'first;second;third\n1;1;1\n2;2;2'); break;
+            case 'data.csv': callback(null, 'first,second,third,missing\n1,1,1,\n2,2,2,0'); break;
+            case 'data.tsv': callback(null, 'first\tsecond\tthird\tmissing\n1\t1\t1\t\n2\t2\t2\t0'); break;
+            case 'data.xsv': callback(null, 'first;second;third;missing\n1;1;1;\n2;2;2;0'); break;
             default:
                 callback(new Error('File not found: ' + path));
         }
@@ -63,10 +63,14 @@ describe("Loading", function() {
             }, done)
             .catch(done);
         });
-        it("should convert strings to numbers with default accessor", function(done) {
+        it("should conservatively convert strings to numbers with default accessor", function(done) {
             dd('data.csv','first').then(function dataLoaded(data){
                 assert.strictEqual(data.at(0).first, 1);
+                assert.strictEqual(data.at(0).missing, null);
+                assert.strictEqual(data.at(1).missing, 0);
                 assert.notStrictEqual(data.at(0).first, '1');
+                assert.notStrictEqual(data.at(0).missing, 0);
+                assert.notStrictEqual(data.at(1).missing, null);
                 done();
             }, done)
             .catch(done);

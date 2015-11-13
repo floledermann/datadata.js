@@ -58,10 +58,22 @@ function rowFileHandler(loader) {
             accessor: function(d) {
                 var keys = Object.keys(d);
                 for (var i=0; i<keys.length; i++) {
-                    var key = keys[i];
+                    var key = keys[i],
+                        val = d[key];
+                    // CSV doesn't support specification of null values
+                    // interpret empty field values as missing
+                    if (val === "") {
+                        d[key] = null;
+                    }
                     // convert to number if it looks like a number
-                    if (!isNaN(+d[key])) {
-                        d[key] = +d[key];
+                    // +"" => 0
+                    // parseInt("") => NaN
+                    // parseInt("123OK") => 123
+                    // +"123OK" => NaN
+                    // so we need to pass both to be strict
+                    else if (!isNaN(+val) && !isNaN(parseInt(val))) {
+                        // unary + converts both ints and floats correctly
+                        d[key] = +val;
                     }
                 }
                 return d;
@@ -180,7 +192,7 @@ dd.registerFileHandler = registerFileHandler;
 dd.rowFileHandler = rowFileHandler;
 
 // simple load function, returns a promise for data without map/reduce-ing
-// DO NOT USE - present only for legacy reasons
+// DO NOT USE - present only for mapmap.js legacy reasons
 dd.load = function(spec, key) {
     if (spec.then && typeof spec.then === 'function') {
         // already a thenable / promise
@@ -202,26 +214,7 @@ dd.load = function(spec, key) {
             });
         }
         else {
-            return new Promise(function(resolve, reject) {
-                d3.csv(spec, function(row) {
-                    var keys = Object.keys(row);
-                    for (var i=0; i<keys.length; i++) {
-                        var key = keys[i];
-                        if (!isNaN(+row[key])) { // in JavaScript, NaN !== NaN !!!
-                            // convert to number if number
-                            row[key] = +row[key];
-                        }
-                    }
-                    return row;
-                },
-                function(error, data) {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-                    resolve(data);                    
-                });
-            });
+            console.warn("Unknown extension: " + ext);
         }
     }
 };
