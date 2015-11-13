@@ -1,6 +1,6 @@
 {
   "name": "datadata",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "author": "Florian Ledermann <florian.ledermann@tuwien.ac.at>",
   "license": "AGPL-3.0",
   "description": "Data loading and processing library",
@@ -14,9 +14,7 @@
     "test": "mocha",
     "build": "npm run browserify",
     "doc": "jsdoc src/index.js -d doc",
-    
     "browserify": "browserify src/index.js -i d3-dsv -o datadata.js",
-    
     "prepublish": "npm run build",
     "preversion": "npm test",
     "version": "npm run build && git add datadata.js"
