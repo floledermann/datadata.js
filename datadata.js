@@ -68,13 +68,7 @@ function rowFileHandler(loader) {
                     if (val === "") {
                         d[key] = null;
                     }
-                    // convert to number if it looks like a number
-                    // +"" => 0
-                    // parseInt("") => NaN
-                    // parseInt("123OK") => 123
-                    // +"123OK" => NaN
-                    // so we need to pass both to be strict
-                    else if (!isNaN(+val) && !isNaN(parseInt(val))) {
+                    else if (dd.isNumeric(val)) {
                         // unary + converts both ints and floats correctly
                         d[key] = +val;
                     }
@@ -259,6 +253,21 @@ Return true if argument is undefined.
 dd.isUndefined = function(obj) {
     return (typeof obj == 'undefined');
 };
+/**
+Return true if argument is a number or a string that strictly looks like a number.
+This method is stricter than +val or parseInt(val) as it doesn't validate the empty
+string or strings contining any non-numeric characters. 
+@param {any} val - The value to check.
+*/
+dd.isNumeric = function(val) {
+    // check if string looks like a number
+    // +"" => 0
+    // parseInt("") => NaN
+    // parseInt("123OK") => 123
+    // +"123OK" => NaN
+    // so we need to pass both to be strict
+    return !isNaN(+val) && !isNaN(parseFloat(val));
+}
 
 // Type conversion / utilities
 /**
