@@ -87,4 +87,48 @@ describe("Types", function() {
             assert(!dd.isUndefined( function(){} ));
         });
     });
+    describe(".isNumeric()", function() {
+        it("should return false for undefined and empty values", function() {
+            assert(!dd.isNumeric());
+            assert(!dd.isNumeric(undefined));
+            assert(!dd.isNumeric(null));
+            assert(!dd.isNumeric(""));
+        });
+        it("should return true for numbers", function() {
+            assert( dd.isNumeric(0));
+            assert( dd.isNumeric(1));
+            assert( dd.isNumeric(-1));
+            
+            assert( dd.isNumeric(0.0));
+            assert( dd.isNumeric(0.1));
+            assert( dd.isNumeric(-0.1));           
+        });
+        it("should return true for strictly numerically-formatted strings", function() {
+            assert( dd.isNumeric("0"));
+            assert( dd.isNumeric("1"));
+            assert( dd.isNumeric("-1"));
+            
+            assert( dd.isNumeric("0.0"));
+            assert( dd.isNumeric("0.1"));
+            assert( dd.isNumeric("-0.1"));           
+            assert( dd.isNumeric(".1"));
+            assert( dd.isNumeric(" 0"));
+            assert( dd.isNumeric("1 "));
+        });
+        it("should return false for not strictly numerically-formatted strings", function() {
+            assert(!dd.isNumeric("1B"));
+            assert(!dd.isNumeric("1 B"));
+            assert(!dd.isNumeric(" 1 B"));
+            
+            assert(!dd.isNumeric("1.1.1"));
+            assert(!dd.isNumeric("B"));
+            assert(!dd.isNumeric(" "));           
+        });
+        it("should return false for other objects", function() {
+            assert(!dd.isNumeric(new Date()));
+            assert(!dd.isNumeric({}));
+            assert(!dd.isNumeric([]));
+            assert(!dd.isNumeric(function(){}));
+        });
+    });
 });
